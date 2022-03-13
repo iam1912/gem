@@ -1,0 +1,6 @@
+package gem
+
+
+func setupTrie() {
+	
+}
