@@ -12,7 +12,7 @@ type student struct {
 }
 
 func main() {
-	r := gem.New()
+	r := gem.Default()
 
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "./static")

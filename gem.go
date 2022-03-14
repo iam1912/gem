@@ -14,11 +14,16 @@ type Engine struct {
 	funcMap    template.FuncMap
 }
 
+func Default() *Engine {
+	r := New()
+	r.Use(Logger(), Recovery())
+	return r
+}
+
 func New() *Engine {
 	r := &Engine{router: newRoter()}
 	r.RouterGroup = &RouterGroup{engie: r}
 	r.groups = []*RouterGroup{r.RouterGroup}
-	r.Use(Logger(), Recovery())
 	return r
 }
 

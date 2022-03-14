@@ -16,9 +16,14 @@ func (group *RouterGroup) Use(middlewares ...HandlerFunc) {
 }
 
 func (group *RouterGroup) Group(basePath string) *RouterGroup {
+	mergeHandlers := []HandlerFunc{}
+	if len(group.middlewares) != 0 {
+		mergeHandlers = append(mergeHandlers, group.middlewares...)
+	}
 	newgroup := &RouterGroup{
-		engie:    group.engie,
-		basePath: group.basePath + basePath,
+		engie:       group.engie,
+		basePath:    group.basePath + basePath,
+		middlewares: mergeHandlers,
 	}
 	group.engie.groups = append(group.engie.groups, newgroup)
 	return newgroup
