@@ -44,7 +44,6 @@ func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileS
 			c.SetStatusCode(http.StatusNotFound)
 			return
 		}
-		c.StatusCode = 200
 		fileServer.ServeHTTP(c.Writer, c.Req)
 	}
 }

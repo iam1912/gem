@@ -64,10 +64,16 @@ func (r *Router) handle(c *Context) {
 		if handler, ok := r.handlers[key]; ok {
 			c.handlers = append(c.handlers, handler)
 		}
+		c.Next()
 	} else {
-		http.Error(c.Writer, "404 NOT FOUND: %s\n", http.StatusInternalServerError)
+		serveError(c, http.StatusNotFound, []byte("404 NOT FOUND\n"))
 	}
+}
+
+func serveError(c *Context, code int, defaultMessage []byte) {
+	c.SetStatusCode(code)
 	c.Next()
+	c.Writer.Write(defaultMessage)
 }
 
 func parsePattern(pattern string) []string {
