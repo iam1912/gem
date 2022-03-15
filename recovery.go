@@ -2,10 +2,19 @@ package gem
 
 import (
 	"fmt"
-	"log"
+	"io"
+	"net/http"
+	"os"
 	"runtime"
 	"strings"
+	"time"
 )
+
+var DefaultErrorWriter io.Writer = os.Stdout
+
+type RecoveryOption struct {
+	OutPut io.Writer
+}
 
 func trace(message string) string {
 	var pcs [32]uintptr
@@ -22,12 +31,23 @@ func trace(message string) string {
 }
 
 func Recovery() HandlerFunc {
+	return RecoveryWithWriter(RecoveryOption{
+		OutPut: DefaultErrorWriter,
+	})
+}
+
+func RecoveryWithWriter(option RecoveryOption) HandlerFunc {
+	out := option.OutPut
+	if out == nil {
+		out = DefaultErrorWriter
+	}
 	return func(c *Context) {
 		defer func() {
 			if err := recover(); err != nil {
 				message := fmt.Sprintf("%s", err)
-				log.Printf("%s\n\n", trace(message))
-				c.AbortStatusJSON(500, "Internal Server Error")
+				errorMsg := fmt.Sprintf("[Recovery] %s panic recovered: %s\n\n", time.Now().Format("2006-01-02 15:04:05"), trace(message))
+				fmt.Fprint(out, errorMsg)
+				c.AbortWithStatus(http.StatusBadRequest)
 			}
 		}()
 		c.Next()

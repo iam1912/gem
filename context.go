@@ -44,6 +44,11 @@ func (c *Context) Abort() {
 	c.index = len(c.handlers)
 }
 
+func (c *Context) AbortWithStatus(code int) {
+	c.SetStatusCode(code)
+	c.Abort()
+}
+
 func (c *Context) AbortStatusJSON(code int, err interface{}) {
 	c.Abort()
 	c.JSON(code, err)
