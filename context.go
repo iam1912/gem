@@ -9,11 +9,15 @@ import (
 	"strings"
 )
 
+const (
+	defaultStatus = http.StatusOK
+)
+
 type H map[string]interface{}
 
 type Context struct {
 	Writer     http.ResponseWriter
-	Req        *http.Request
+	Request    *http.Request
 	Method     string
 	Path       string
 	Params     map[string]string
@@ -23,14 +27,13 @@ type Context struct {
 	engine     *Engine
 }
 
-func newContext(w http.ResponseWriter, r *http.Request) *Context {
-	return &Context{
-		Writer: w,
-		Req:    r,
-		Method: r.Method,
-		Path:   r.URL.Path,
-		index:  -1,
-	}
+func (c *Context) reset() {
+	c.handlers = nil
+	c.Method = ""
+	c.index = -1
+	c.Params = nil
+	c.Path = ""
+	c.StatusCode = defaultStatus
 }
 
 func (c *Context) Next() {
@@ -55,11 +58,11 @@ func (c *Context) AbortStatusJSON(code int, err interface{}) {
 }
 
 func (c *Context) PostForm(key string) string {
-	return c.Req.FormValue(key)
+	return c.Request.FormValue(key)
 }
 
 func (c *Context) Query(key string) string {
-	return c.Req.URL.Query().Get(key)
+	return c.Request.URL.Query().Get(key)
 }
 
 func (c *Context) Param(key string) string {
@@ -71,12 +74,12 @@ func (c *Context) Param(key string) string {
 }
 
 func (c *Context) FormFile(name string, maxMemory int64) (*multipart.FileHeader, error) {
-	if c.Req.MultipartForm == nil {
-		if err := c.Req.ParseMultipartForm(maxMemory); err != nil {
+	if c.Request.MultipartForm == nil {
+		if err := c.Request.ParseMultipartForm(maxMemory); err != nil {
 			return nil, err
 		}
 	}
-	f, fh, err := c.Req.FormFile(name)
+	f, fh, err := c.Request.FormFile(name)
 	if err != nil {
 		return nil, err
 	}
@@ -124,10 +127,10 @@ func (c *Context) Data(code int, contentType string, data []byte) {
 }
 
 func (c *Context) ClientIP() string {
-	xRealIP := c.Req.Header.Get("X-Real-Ip")
-	xForwardedFor := c.Req.Header.Get("X-Forwarded-For")
+	xRealIP := c.Request.Header.Get("X-Real-Ip")
+	xForwardedFor := c.Request.Header.Get("X-Forwarded-For")
 	if xRealIP == "" && xForwardedFor == "" {
-		ip, _, err := net.SplitHostPort(strings.TrimSpace(c.Req.RemoteAddr))
+		ip, _, err := net.SplitHostPort(strings.TrimSpace(c.Request.RemoteAddr))
 		if err != nil {
 			return ""
 		} else {

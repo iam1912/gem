@@ -23,7 +23,7 @@ func setupTrie() *node {
 	node := &node{}
 	for _, value := range initialization {
 		parts := parsePattern(value.Pattern)
-		node.insert(value.Pattern, parts, 0)
+		node.insert(value.Pattern, parts, 0, nil)
 	}
 	return node
 }
@@ -51,7 +51,7 @@ func TestTrie(t *testing.T) {
 		}
 		if testCase.OperateType == "insert" {
 			parts := parsePattern(testCase.Pattern)
-			root.insert(testCase.Pattern, parts, 0)
+			root.insert(testCase.Pattern, parts, 0, nil)
 		}
 	}
 }

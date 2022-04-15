@@ -4,28 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"time"
 )
-
-type statusWriter struct {
-	http.ResponseWriter
-	status int
-}
-
-func (w *statusWriter) WriteHeader(status int) {
-	w.status = status
-	w.ResponseWriter.WriteHeader(status)
-}
-
-func (w *statusWriter) Write(b []byte) (int, error) {
-	return w.ResponseWriter.Write(b)
-}
-
-func (w *statusWriter) Header() http.Header {
-	return w.ResponseWriter.Header()
-}
 
 var DefaultWriter io.Writer = os.Stdout
 

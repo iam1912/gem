@@ -6,27 +6,22 @@ import (
 )
 
 type RouterGroup struct {
-	engie       *Engine
-	middlewares []HandlerFunc
-	basePath    string
+	engie    *Engine
+	basePath string
+	root     bool
+	handlers []HandlerFunc
 }
 
-func (group *RouterGroup) Use(middlewares ...HandlerFunc) {
-	group.middlewares = append(group.middlewares, middlewares...)
+func (group *RouterGroup) Use(handlers ...HandlerFunc) {
+	group.handlers = append(group.handlers, handlers...)
 }
 
-func (group *RouterGroup) Group(basePath string) *RouterGroup {
-	mergeHandlers := []HandlerFunc{}
-	if len(group.middlewares) != 0 {
-		mergeHandlers = append(mergeHandlers, group.middlewares...)
+func (group *RouterGroup) Group(relativePath string, handlers ...HandlerFunc) *RouterGroup {
+	return &RouterGroup{
+		engie:    group.engie,
+		basePath: group.combineAbsoltePath(relativePath),
+		handlers: group.combineHandlers(handlers),
 	}
-	newgroup := &RouterGroup{
-		engie:       group.engie,
-		basePath:    group.basePath + basePath,
-		middlewares: mergeHandlers,
-	}
-	group.engie.groups = append(group.engie.groups, newgroup)
-	return newgroup
 }
 
 func (group *RouterGroup) Static(relativePath string, root string) {
@@ -44,27 +39,46 @@ func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileS
 			c.SetStatusCode(http.StatusNotFound)
 			return
 		}
-		fileServer.ServeHTTP(c.Writer, c.Req)
+		fileServer.ServeHTTP(c.Writer, c.Request)
 	}
 }
 
-func (group *RouterGroup) addRoute(method string, relativePath string, handler HandlerFunc) {
-	pattern := group.basePath + relativePath
-	group.engie.router.addRoute(method, pattern, handler)
+func (group *RouterGroup) addRoute(method string, relativePath string, handlers ...HandlerFunc) {
+	pattern := group.combineAbsoltePath(relativePath)
+	handlers = group.combineHandlers(handlers)
+	group.engie.addRoute(method, pattern, handlers)
 }
 
 func (group *RouterGroup) GET(relativePath string, handler HandlerFunc) {
-	group.addRoute("GET", relativePath, handler)
+	group.addRoute(http.MethodGet, relativePath, handler)
 }
 
 func (group *RouterGroup) POST(relativePath string, handler HandlerFunc) {
-	group.addRoute("POST", relativePath, handler)
+	group.addRoute(http.MethodPost, relativePath, handler)
 }
 
 func (group *RouterGroup) PUT(relativePath string, handler HandlerFunc) {
-	group.addRoute("PUT", relativePath, handler)
+	group.addRoute(http.MethodPut, relativePath, handler)
 }
 
 func (group *RouterGroup) DELETE(relativePath string, handler HandlerFunc) {
-	group.addRoute("DELETE", relativePath, handler)
+	group.addRoute(http.MethodDelete, relativePath, handler)
+}
+
+func (group *RouterGroup) combineAbsoltePath(relativePath string) string {
+	if relativePath == "" {
+		return group.basePath
+	}
+	return path.Join(group.basePath, relativePath)
+}
+
+func (group *RouterGroup) combineHandlers(handlers []HandlerFunc) []HandlerFunc {
+	size := len(group.handlers) + len(handlers)
+	if size >= 9 {
+		panic("")
+	}
+	mergeHandlers := make([]HandlerFunc, size)
+	copy(mergeHandlers, group.handlers)
+	copy(mergeHandlers[len(group.handlers):], handlers)
+	return mergeHandlers
 }

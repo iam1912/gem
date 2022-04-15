@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/iam1912/gem"
 )
@@ -22,7 +24,7 @@ func main() {
 
 	r.GET("/assets/*filepath", func(c *gem.Context) {
 		c.JSON(http.StatusOK, gem.H{
-				"filepath": c.Param("filepath"),
+			"filepath": c.Param("filepath"),
 		})
 	})
 	r.GET("/hello/:name", func(c *gem.Context) {
@@ -49,5 +51,18 @@ func main() {
 		names := []string{"1111"}
 		c.String(200, names[5])
 	})
-	r.Run(":8080")
+
+	v1 := r.Group("/v1")
+	v1.Use(onlyForV1())
+	v1.GET("/test1", func(c *gem.Context) {
+		c.String(200, "test1")
+	})
+	r.Run(":8082")
+}
+
+func onlyForV1() gem.HandlerFunc {
+	return func(c *gem.Context) {
+		t := time.Now()
+		log.Printf("[%d] %s in %v for group v2 HELLO WORLD", c.StatusCode, c.Request.RequestURI, time.Since(t))
+	}
 }
