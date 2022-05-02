@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/iam1912/gem"
+	"github.com/iam1912/gemseries/gem"
 )
 
 type student struct {
